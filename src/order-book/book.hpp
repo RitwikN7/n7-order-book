@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/flat_hash_map.hpp"
 #include "common/object_pool.hpp"
 #include "common/utils.hpp"
 #include "order.hpp"
@@ -9,8 +10,8 @@
 #include <cstddef>
 #include <functional>
 #include <map>
+#include <memory_resource>
 #include <optional>
-#include <unordered_map>
 #include <vector>
 
 namespace MatchingEngine
@@ -26,9 +27,9 @@ public:
     Book(const Book&) = delete;
     Book& operator=(const Book&) = delete;
 
-    // Movable
-    Book(Book&&) noexcept = default;
-    Book& operator=(Book&&) noexcept = default;
+    // Non-movable
+    Book(Book&&) noexcept = delete;
+    Book& operator=(Book&&) noexcept = delete;
 
     std::vector<Trade> addOrder(const OrderData& order);
     bool cancelOrder(OrderBookUtils::OrderID order_id);
@@ -52,10 +53,11 @@ private:
     void insertRestingOrder(const OrderData& order);
 
     OrderBookUtils::ObjectPool<OrderNode> order_pool_;
-    std::unordered_map<OrderBookUtils::OrderID, OrderNode*> orders_map_;
+    OrderBookUtils::FlatHashMap<OrderBookUtils::OrderID, OrderNode*> orders_map_;
 
-    std::map<OrderBookUtils::Price, PriceLevel, std::greater<>> bids_;
-    std::map<OrderBookUtils::Price, PriceLevel, std::less<>> asks_;
+    std::pmr::unsynchronized_pool_resource pool_resource_;
+    std::pmr::map<OrderBookUtils::Price, PriceLevel, std::greater<>> bids_;
+    std::pmr::map<OrderBookUtils::Price, PriceLevel, std::less<>> asks_;
 };
 
 } // namespace MatchingEngine

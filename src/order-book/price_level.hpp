@@ -50,8 +50,22 @@ struct PriceLevel
         --order_count;
     }
 
+    void reset(OrderBookUtils::Price p = 0) noexcept
+    {
+        head = nullptr;
+        tail = nullptr;
+        prev_level = nullptr;
+        next_level = nullptr;
+        price = p;
+        total_volume = 0;
+        order_count = 0;
+    }
+
     OrderNode* head{nullptr};
     OrderNode* tail{nullptr};
+
+    PriceLevel* prev_level{nullptr};
+    PriceLevel* next_level{nullptr};
 
     OrderBookUtils::Price price{};
     OrderBookUtils::Quantity total_volume{};

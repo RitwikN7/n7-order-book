@@ -20,6 +20,7 @@ set(ORDER_BOOK_SOURCES
 )
 
 set(ORDER_BOOK_HEADERS
+    src/common/flat_hash_map.hpp
     src/common/object_pool.hpp
     src/common/utils.hpp
     src/order-book/book.hpp
