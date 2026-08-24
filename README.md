@@ -75,18 +75,18 @@ Benchmarked on **1,000,000 operations** per scenario with nanosecond-resolution 
 
 | Action Type | Event Count | Mean Latency | Median (\(P_{50}\)) | \(P_{90}\) | \(P_{95}\) | \(P_{99}\) | \(P_{99.9}\) | Max Latency | Throughput |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Market Orders** | 150,336 | **259.3 ns** | **143.0 ns** | 450.0 ns | 566.0 ns | 931.0 ns | 2.44 µs | 876.5 µs | **~3.86M ops/sec** |
-| **Cancellations** | 200,195 | **511.4 ns** | **542.0 ns** | 865.0 ns | 1.05 µs | 1.96 µs | 4.99 µs | 235.1 µs | **~1.96M ops/sec** |
-| **New Limit Orders**| 599,473 | **637.8 ns** | **526.0 ns** | 878.0 ns | 1.05 µs | 1.67 µs | 5.32 µs | 454.1 µs | **~1.57M ops/sec** |
-| **Modifications** | 49,996 | **812.9 ns** | **864.0 ns** | 1.45 µs | 1.79 µs | 2.89 µs | 9.93 µs | 189.6 µs | **~1.23M ops/sec** |
-| **OVERALL WORKLOAD**| 1,000,000 | **564.3 ns** | **500.0 ns** | **892.0 ns** | **1.09 µs** | **1.80 µs** | **5.09 µs** | **876.5 µs** | **~1.57M ops/sec** |
+| **Market Orders** | 150,336 | **218.7 ns** | **133.0 ns** | 415.0 ns | 491.0 ns | 704.0 ns | 1.11 µs | 115.3 µs | **~4.57M ops/sec** |
+| **Cancellations** | 200,195 | **424.5 ns** | **519.0 ns** | 679.0 ns | 740.0 ns | 998.0 ns | 4.14 µs | 124.5 µs | **~2.36M ops/sec** |
+| **New Limit Orders**| 599,473 | **532.7 ns** | **473.0 ns** | 744.0 ns | 812.0 ns | 1.01 µs | 3.40 µs | 393.9 µs | **~1.88M ops/sec** |
+| **Modifications** | 49,996 | **687.6 ns** | **822.0 ns** | 1.25 µs | 1.36 µs | 1.69 µs | 6.82 µs | 37.9 µs | **~1.45M ops/sec** |
+| **OVERALL WORKLOAD**| 1,000,000 | **471.6 ns** | **458.0 ns** | **742.0 ns** | **848.0 ns** | **1.20 µs** | **2.74 µs** | **393.9 µs** | **~1.86M ops/sec** |
 
 ### 2. Bulk Operation Benchmarks (1,000,000 Operations)
 
 | Benchmark Scenario | Sample Count | Mean Latency | Median (\(P_{50}\)) | \(P_{99}\) | \(P_{99.9}\) | Throughput |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Bulk $O(1)$ Cancellations** | 1,000,000 | **48.7 ns** | **41.0 ns** | **155.0 ns** | **612.0 ns** | **~11.43M cancels/sec** |
-| **Bulk Limit Insertions** | 1,000,000 | **1,116.0 ns** | **938.0 ns** | **3.90 µs** | **16.09 µs** | **~854,648 orders/sec** |
+| **Bulk $O(1)$ Cancellations** | 1,000,000 | **37.7 ns** | **36.0 ns** | **109.0 ns** | **323.0 ns** | **~14.00M cancels/sec** |
+| **Bulk Limit Insertions** | 1,000,000 | **847.3 ns** | **789.0 ns** | **1.58 µs** | **10.78 µs** | **~1.12M orders/sec** |
 
 ---
 
@@ -128,7 +128,7 @@ pip install -r requirements.txt
 python scripts/plot_latency.py
 ```
 
-#### Using `uv` (Ultra-fast):
+#### Using `uv`:
 ```bash
 # Create virtual environment and install from requirements.txt
 uv venv .venv
@@ -180,3 +180,11 @@ n7-order-book/
     └── main.cpp                # Test suite, latency distribution benchmarks & CSV exporter
 ```
 
+---
+
+## Future Work
+
+- **Cache-Aligned Price Index**: Replace binary search trees (`std::pmr::map`) with a B-Tree or Radix array to eliminate pointer-chasing and cache misses during level traversal.
+- **Advanced Order Types & TIF**: Add Time-in-Force policies (IOC, FOK, GTC), Stop-Loss / Take-Profit triggers, and Iceberg / Hidden orders.
+- **Multi-Symbol Sharding & Sequencer**: Partition symbols across dedicated CPU cores with lock-free Write-Ahead Logging (WAL) for deterministic state replay.
+- **Deterministic Sequencer & Replay Log**: Implement a lock-free ring-buffer Write-Ahead Log (WAL) for microsecond crash recovery and state replication.
