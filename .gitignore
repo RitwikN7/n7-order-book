@@ -1,3 +1,4 @@
+# Build artifacts
 build/
 bin/
 .cache/
@@ -5,3 +6,18 @@ compile_commands.json
 *.o
 *.a
 *.so
+
+# Python virtual environment & bytecode
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Benchmark outputs, charts & data
+data/
+charts/
+*.csv
+

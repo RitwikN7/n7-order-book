@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <memory_resource>
 #include <optional>
 #include <vector>
 
@@ -14,9 +15,13 @@ namespace MatchingEngine
 {
 
 Book::Book(std::size_t max_orders)
-    : order_pool_(max_orders)
+    : order_pool_(max_orders),
+      orders_map_(max_orders),
+      pool_resource_(std::pmr::pool_options{.max_blocks_per_chunk = 65536,
+                                            .largest_required_pool_block = 256}),
+      bids_(&pool_resource_),
+      asks_(&pool_resource_)
 {
-    orders_map_.reserve(max_orders);
 }
 
 std::vector<Trade> Book::addOrder(const OrderData& order)
@@ -35,6 +40,7 @@ std::vector<Trade> Book::addOrder(const OrderData& order)
 std::vector<Trade> Book::matchBuyOrder(OrderData& order)
 {
     std::vector<Trade> trades;
+    trades.reserve(8);
 
     while (order.quantity > 0 && !asks_.empty())
     {
@@ -82,6 +88,7 @@ std::vector<Trade> Book::matchBuyOrder(OrderData& order)
 std::vector<Trade> Book::matchSellOrder(OrderData& order)
 {
     std::vector<Trade> trades;
+    trades.reserve(8);
 
     while (order.quantity > 0 && !bids_.empty())
     {
@@ -138,7 +145,7 @@ void Book::insertRestingOrder(const OrderData& order)
     node->side = order.side;
     node->type = order.type;
 
-    orders_map_[node->order_id] = node;
+    orders_map_.insert(node->order_id, node);
 
     if (node->side == OrderBookUtils::OrderSide::BUY)
         bids_[node->price].append(node);
@@ -148,11 +155,11 @@ void Book::insertRestingOrder(const OrderData& order)
 
 bool Book::cancelOrder(OrderBookUtils::OrderID order_id)
 {
-    auto it = orders_map_.find(order_id);
-    if (it == orders_map_.end())
+    auto* node_ptr = orders_map_.find(order_id);
+    if (node_ptr == nullptr)
         return false;
 
-    OrderNode* node = it->second;
+    OrderNode* node = *node_ptr;
 
     if (node->side == OrderBookUtils::OrderSide::BUY)
     {
@@ -175,7 +182,7 @@ bool Book::cancelOrder(OrderBookUtils::OrderID order_id)
         }
     }
 
-    orders_map_.erase(it);
+    orders_map_.erase(order_id);
     order_pool_.release(node);
     return true;
 }
@@ -186,11 +193,11 @@ bool Book::modifyOrder(OrderBookUtils::OrderID order_id, OrderBookUtils::Price n
     if (new_quantity == 0)
         return cancelOrder(order_id);
 
-    auto it = orders_map_.find(order_id);
-    if (it == orders_map_.end())
+    auto* node_ptr = orders_map_.find(order_id);
+    if (node_ptr == nullptr)
         return false;
 
-    OrderNode* node = it->second;
+    OrderNode* node = *node_ptr;
 
     if (new_price == node->price && new_quantity <= node->quantity)
     {
@@ -230,20 +237,20 @@ bool Book::modifyOrder(OrderBookUtils::OrderID order_id, OrderBookUtils::Price n
 
 bool Book::modifyOrder(OrderBookUtils::OrderID order_id, OrderBookUtils::Quantity new_quantity)
 {
-    auto it = orders_map_.find(order_id);
-    if (it == orders_map_.end())
+    auto* node_ptr = orders_map_.find(order_id);
+    if (node_ptr == nullptr)
         return false;
 
-    return modifyOrder(order_id, it->second->price, new_quantity);
+    return modifyOrder(order_id, (*node_ptr)->price, new_quantity);
 }
 
 const OrderNode* Book::findOrder(OrderBookUtils::OrderID order_id) const
 {
-    auto it = orders_map_.find(order_id);
-    if (it == orders_map_.end())
+    const auto* node_ptr = orders_map_.find(order_id);
+    if (node_ptr == nullptr)
         return nullptr;
 
-    return it->second;
+    return *node_ptr;
 }
 
 std::optional<OrderBookUtils::Price> Book::bestBid() const
