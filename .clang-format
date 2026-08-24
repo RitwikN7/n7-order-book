@@ -1,0 +1,64 @@
+---
+BasedOnStyle: LLVM
+Standard: Latest
+
+# --- Core Indentation & Width ---
+ColumnLimit: 100
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# --- Braces & Wrapping ---
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: Always
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: false
+  BeforeWhile: true
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+
+# --- Modern C++20/C++23 Concepts & Requires Clauses ---
+BreakBeforeConceptDeclarations: Always
+RequiresClausePosition: OwnLine
+RequiresExpressionIndentation: Keyword
+IndentRequiresClause: true
+
+# --- Lambdas & Modern Expressions ---
+LambdaBodyIndentation: Signature
+AllowShortLambdasOnASingleLine: Empty
+AlignArrayOfStructures: Left
+
+# --- Attributes (C++11 through C++23) ---
+BreakAfterAttributes: Never
+
+# --- Pointers & References ---
+PointerAlignment: Left
+ReferenceAlignment: Pointer
+
+# --- Classes & Constructors ---
+AccessModifierOffset: -4
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: Never
+ConstructorInitializerIndentWidth: 4
+BreakInheritanceList: BeforeColon
+
+# --- Namespaces, Modules & Includes ---
+NamespaceIndentation: None
+FixNamespaceComments: true
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
+
+# --- Functions & Templates ---
+AllowShortFunctionsOnASingleLine: None
+BreakTemplateDeclarations: Yes
+SpaceAfterTemplateKeyword: true

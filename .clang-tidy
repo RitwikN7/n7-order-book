@@ -1,0 +1,27 @@
+---
+Checks: >
+  -*,
+  bugprone-*,
+  performance-*,
+  modernize-*,
+  readability-*,
+  cppcoreguidelines-*,
+  clang-analyzer-*,
+  -readability-magic-numbers,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -modernize-use-trailing-return-type,
+  -modernize-use-nodiscard,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-bounds-*,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -readability-identifier-length,
+  -readability-else-after-return,
+  -readability-function-cognitive-complexity,
+  -readability-braces-around-statements
+
+WarningsAsErrors: ''
+
+CheckOptions:
+  modernize-use-auto.MinTypeNameLength: '5'
+  modernize-use-ranges.UseCompactLambda: 'true'
+  cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: 'true'
