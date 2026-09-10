@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 N7 Low-Latency Order Book Benchmark & Visualizer
-Generates publication-quality charts using matplotlib and seaborn from data/latency_metrics.csv.
+Generates publication-quality charts using matplotlib from data/latency_metrics.csv.
 """
 
 import os

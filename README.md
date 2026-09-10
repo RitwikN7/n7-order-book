@@ -150,7 +150,7 @@ Generated charts will be saved to the `charts/` directory:
 ```
 n7-order-book/
 ├── CMakeLists.txt              # CMake build configuration (C++23)
-├── requirements.txt            # Python dependencies (matplotlib, seaborn, pandas, numpy)
+├── requirements.txt            # Python dependencies (matplotlib, pandas, numpy)
 ├── .clang-format               # Project formatting rules
 ├── .clang-tidy                 # Static analysis rules
 ├── .gitignore
@@ -165,7 +165,7 @@ n7-order-book/
 │   ├── throughput_comparison.png# Throughput (ops/sec) comparison (PNG)
 │   └── throughput_comparison.svg# Throughput (ops/sec) comparison (SVG)
 ├── scripts/
-│   └── plot_latency.py         # Python visualization generator (matplotlib/seaborn)
+│   └── plot_latency.py         # Python visualization generator (matplotlib)
 └── src/
     ├── common/
     │   ├── flat_hash_map.hpp   # High-speed open-addressing flat hash table
@@ -187,4 +187,3 @@ n7-order-book/
 - **Cache-Aligned Price Index**: Replace binary search trees (`std::pmr::map`) with a B-Tree or Radix array to eliminate pointer-chasing and cache misses during level traversal.
 - **Advanced Order Types & TIF**: Add Time-in-Force policies (IOC, FOK, GTC), Stop-Loss / Take-Profit triggers, and Iceberg / Hidden orders.
 - **Multi-Symbol Sharding & Sequencer**: Partition symbols across dedicated CPU cores with lock-free Write-Ahead Logging (WAL) for deterministic state replay.
-- **Deterministic Sequencer & Replay Log**: Implement a lock-free ring-buffer Write-Ahead Log (WAL) for microsecond crash recovery and state replication.
