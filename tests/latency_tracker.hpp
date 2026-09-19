@@ -273,19 +273,21 @@ inline void printBookState(const MatchingEngine::Book& book)
 
     if (auto best_bid = book.bestBid())
         std::cout << "Best Bid:            $" << std::fixed << std::setprecision(4)
-                  << (*best_bid / PRICE_SCALE) << " (" << *best_bid << " ticks)\n";
+                  << (static_cast<double>(best_bid->value()) / PRICE_SCALE) << " ("
+                  << best_bid->value() << " ticks)\n";
     else
         std::cout << "Best Bid:            None\n";
 
     if (auto best_ask = book.bestAsk())
         std::cout << "Best Ask:            $" << std::fixed << std::setprecision(4)
-                  << (*best_ask / PRICE_SCALE) << " (" << *best_ask << " ticks)\n";
+                  << (static_cast<double>(best_ask->value()) / PRICE_SCALE) << " ("
+                  << best_ask->value() << " ticks)\n";
     else
         std::cout << "Best Ask:            None\n";
 
     if (auto spread = book.spread())
         std::cout << "Spread:              $" << std::fixed << std::setprecision(4)
-                  << (*spread / PRICE_SCALE) << "\n";
+                  << (static_cast<double>(spread->value()) / PRICE_SCALE) << "\n";
     else
         std::cout << "Spread:              N/A\n";
 
@@ -295,6 +297,8 @@ inline void printBookState(const MatchingEngine::Book& book)
 struct MixedBenchmarkResults
 {
     LatencyStats limit_stats;
+    LatencyStats reserve_stats;
+    LatencyStats stop_stats;
     LatencyStats cancel_stats;
     LatencyStats market_stats;
     LatencyStats modify_stats;
@@ -331,6 +335,8 @@ inline void exportLatencyMetricsToCsv(const std::string& filepath, const Latency
     writeRow("Bulk Limit Insertions", bulk_insert);
     writeRow("Bulk Cancellations", bulk_cancel);
     writeRow("Mixed: Limit Add", mixed.limit_stats);
+    writeRow("Mixed: Reserve Add", mixed.reserve_stats);
+    writeRow("Mixed: Stop Add", mixed.stop_stats);
     writeRow("Mixed: Cancel", mixed.cancel_stats);
     writeRow("Mixed: Market Order", mixed.market_stats);
     writeRow("Mixed: Modify", mixed.modify_stats);

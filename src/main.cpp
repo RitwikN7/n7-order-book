@@ -1,6 +1,7 @@
 #include "common/utils.hpp"
 #include "order-book/book.hpp"
 #include "order-book/order.hpp"
+#include "order-book/order_builder.hpp"
 #include "order-book/trade.hpp"
 
 #include <iomanip>
@@ -18,25 +19,38 @@ constexpr double PRICE_SCALE = 10'000.0; // 10^4 fixed-point scaling factor (4 d
 void printBookState(const Book& book)
 {
     std::cout << "  --------------------------------------------------------\n";
-    std::cout << "  Current Active Orders: " << book.orderCount() << "\n";
+    std::cout << "  Active Resting Orders: " << book.activeOrderCount() << "\n";
 
     if (auto best_bid = book.bestBid())
         std::cout << "  Best Bid:              $" << std::fixed << std::setprecision(4)
-                  << (*best_bid / PRICE_SCALE) << " (" << *best_bid << " ticks)\n";
+                  << (static_cast<double>(best_bid->value()) / PRICE_SCALE) << " ("
+                  << best_bid->value() << " ticks)\n";
     else
         std::cout << "  Best Bid:              None\n";
 
     if (auto best_ask = book.bestAsk())
         std::cout << "  Best Ask:              $" << std::fixed << std::setprecision(4)
-                  << (*best_ask / PRICE_SCALE) << " (" << *best_ask << " ticks)\n";
+                  << (static_cast<double>(best_ask->value()) / PRICE_SCALE) << " ("
+                  << best_ask->value() << " ticks)\n";
     else
         std::cout << "  Best Ask:              None\n";
 
     if (auto spread = book.spread())
         std::cout << "  Spread:                $" << std::fixed << std::setprecision(4)
-                  << (*spread / PRICE_SCALE) << " (" << *spread << " ticks)\n";
+                  << (static_cast<double>(spread->value()) / PRICE_SCALE) << " (" << spread->value()
+                  << " ticks)\n";
     else
         std::cout << "  Spread:                N/A\n";
+
+    if (auto ltp = book.lastTradedPrice())
+        std::cout << "  Last Traded Price:     $" << std::fixed << std::setprecision(4)
+                  << (static_cast<double>(ltp->value()) / PRICE_SCALE) << " (" << ltp->value()
+                  << " ticks)\n";
+    else
+        std::cout << "  Last Traded Price:     None\n";
+
+    if (book.stopOrderCount() > 0)
+        std::cout << "  Dormant Stop Orders:   " << book.stopOrderCount() << "\n";
 
     std::cout << "  --------------------------------------------------------\n";
 }
@@ -49,9 +63,10 @@ void printTrades(std::string_view label, const std::vector<Trade>& trades)
     {
         const auto& t = trades[i];
         std::cout << "      Trade #" << (i + 1) << ": Maker Order " << t.maker_order_id
-                  << " vs Taker Order " << t.taker_order_id << " | Qty: " << t.quantity << " @ $"
-                  << std::fixed << std::setprecision(4) << (t.price / PRICE_SCALE) << " ("
-                  << t.price << " ticks)\n";
+                  << " vs Taker Order " << t.taker_order_id << " | Qty: " << t.quantity.value()
+                  << " @ $" << std::fixed << std::setprecision(4)
+                  << (static_cast<double>(t.price.value()) / PRICE_SCALE) << " (" << t.price.value()
+                  << " ticks)\n";
     }
 }
 
@@ -69,56 +84,74 @@ int main()
 
     std::cout << "\n[STEP 1] Inserting resting limit orders into both sides...\n";
     // Resting bids
-    book.addOrder(OrderData{
-        .order_id = 101,
-        .price = 1'000'000, // $100.0000
-        .quantity = 50,
-        .side = OrderBookUtils::OrderSide::BUY,
-        .type = OrderBookUtils::OrderType::LIMIT,
-    });
-    book.addOrder(OrderData{
-        .order_id = 102,
-        .price = 995'000, // $99.5000
-        .quantity = 100,
-        .side = OrderBookUtils::OrderSide::BUY,
-        .type = OrderBookUtils::OrderType::LIMIT,
-    });
+    book.addOrder(OrderBuilder{}
+                      .id(101)
+                      .buy()
+                      .limit(OrderBookUtils::Price(1'000'000), OrderBookUtils::Quantity(50))
+                      .build());
+    book.addOrder(OrderBuilder{}
+                      .id(102)
+                      .buy()
+                      .limit(OrderBookUtils::Price(995'000), OrderBookUtils::Quantity(100))
+                      .build());
 
     // Resting asks
-    book.addOrder(OrderData{
-        .order_id = 201,
-        .price = 1'005'000, // $100.5000
-        .quantity = 30,
-        .side = OrderBookUtils::OrderSide::SELL,
-        .type = OrderBookUtils::OrderType::LIMIT,
-    });
-    book.addOrder(OrderData{
-        .order_id = 202,
-        .price = 1'010'000, // $101.0000
-        .quantity = 70,
-        .side = OrderBookUtils::OrderSide::SELL,
-        .type = OrderBookUtils::OrderType::LIMIT,
-    });
+    book.addOrder(OrderBuilder{}
+                      .id(201)
+                      .sell()
+                      .limit(OrderBookUtils::Price(1'005'000), OrderBookUtils::Quantity(30))
+                      .build());
+    book.addOrder(OrderBuilder{}
+                      .id(202)
+                      .sell()
+                      .limit(OrderBookUtils::Price(1'010'000), OrderBookUtils::Quantity(70))
+                      .build());
 
     printBookState(book);
 
     std::cout << "\n[STEP 2] Submitting an aggressive crossing market buy order (qty 45)...\n";
-    auto trades1 = book.addOrder(OrderData{
-        .order_id = 301,
-        .price = 0,
-        .quantity = 45,
-        .side = OrderBookUtils::OrderSide::BUY,
-        .type = OrderBookUtils::OrderType::MARKET,
-    });
+    auto trades1 =
+        book.addOrder(OrderBuilder{}.id(301).buy().market(OrderBookUtils::Quantity(45)).build());
     printTrades("Market Buy Order #301", trades1);
     printBookState(book);
 
     std::cout << "\n[STEP 3] Modifying resting order #102: reduce quantity to 60...\n";
-    book.modifyOrder(102, 60);
+    book.modifyOrder(102, OrderBookUtils::Quantity(60));
     printBookState(book);
 
     std::cout << "\n[STEP 4] Cancelling order #202...\n";
     book.cancelOrder(202);
+    printBookState(book);
+
+    std::cout << "\n[STEP 5] Submitting a Reserve Order (#401) using OrderDataBuilder (Total: 100, "
+                 "Display: 25 @ $100.50)...\n";
+    OrderData reserve_order =
+        OrderDataBuilder{}
+            .id(401)
+            .sell()
+            .limit(OrderBookUtils::Price(1'005'000))
+            .reserve(OrderBookUtils::Quantity(100), OrderBookUtils::Quantity(25))
+            .build();
+    book.addOrder(reserve_order);
+    printBookState(book);
+
+    std::cout << "\n[STEP 6] Placing a dormant Stop Sell Market Order (#501) with Stop Price "
+                 "$100.00...\n";
+    OrderData stop_order =
+        OrderDataBuilder{}
+            .id(501)
+            .sell()
+            .stopMarket(OrderBookUtils::Price(1'000'000), OrderBookUtils::Quantity(30))
+            .build();
+    book.addOrder(stop_order);
+    printBookState(book);
+
+    std::cout << "\n[STEP 7] Submitting crossing market buy (#601, qty 35) hitting Reserve Order "
+                 "#401...\n";
+    OrderData aggressive_buy =
+        OrderDataBuilder{}.id(601).buy().market(OrderBookUtils::Quantity(35)).build();
+    auto trades2 = book.addOrder(aggressive_buy);
+    printTrades("Aggressive Buy vs Reserve Order #401", trades2);
     printBookState(book);
 
     std::cout << "\n===============================================================\n";

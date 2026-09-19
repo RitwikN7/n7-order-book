@@ -45,13 +45,19 @@ public:
     [[nodiscard]] std::optional<OrderBookUtils::Price> bestBid() const;
     [[nodiscard]] std::optional<OrderBookUtils::Price> bestAsk() const;
     [[nodiscard]] std::optional<OrderBookUtils::Price> spread() const;
+    [[nodiscard]] std::optional<OrderBookUtils::Price> lastTradedPrice() const noexcept;
 
     [[nodiscard]] std::size_t orderCount() const noexcept;
+    [[nodiscard]] std::size_t activeOrderCount() const noexcept;
+    [[nodiscard]] std::size_t stopOrderCount() const noexcept;
     [[nodiscard]] bool empty() const noexcept;
 
 private:
     std::vector<Trade> matchBuyOrder(OrderData& order);
     std::vector<Trade> matchSellOrder(OrderData& order);
+
+    std::vector<Trade> handleStopOrder(const OrderData& order);
+    void triggerStopOrders(std::vector<Trade>& trades);
 
     void insertRestingOrder(const OrderData& order);
 
@@ -61,6 +67,12 @@ private:
     std::pmr::unsynchronized_pool_resource pool_resource_;
     std::pmr::map<OrderBookUtils::Price, PriceLevel, std::greater<>> bids_;
     std::pmr::map<OrderBookUtils::Price, PriceLevel, std::less<>> asks_;
+
+    std::pmr::map<OrderBookUtils::Price, PriceLevel, std::less<>> stop_bids_;
+    std::pmr::map<OrderBookUtils::Price, PriceLevel, std::greater<>> stop_asks_;
+
+    std::optional<OrderBookUtils::Price> last_traded_price_{std::nullopt};
+    std::size_t stop_order_count_{0};
 };
 
 } // namespace MatchingEngine
