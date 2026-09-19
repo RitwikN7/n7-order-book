@@ -4,7 +4,11 @@
 #include "order-book/book.hpp"
 #include "order-book/order.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <gtest/gtest.h>
+#include <string>
+#include <vector>
 
 using namespace MatchingEngine;
 

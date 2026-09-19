@@ -1,3 +1,4 @@
+#include "common/utils.hpp"
 #include "latency_tracker.hpp"
 #include "order-book/book.hpp"
 #include "order-book/order.hpp"
@@ -6,8 +7,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <gtest/gtest.h>
+#include <iomanip>
 #include <iostream>
 #include <random>
+#include <string>
+#include <string_view>
 #include <vector>
 
 using namespace MatchingEngine;
@@ -42,8 +46,7 @@ protected:
 TEST_F(LatencyBenchmarkTest, BulkLimitInsertions)
 {
     const std::size_t num_orders = BENCHMARK_ORDERS_COUNT;
-    const std::size_t book_capacity =
-        static_cast<std::size_t>(num_orders * BENCHMARK_HEADROOM_FACTOR);
+    const auto book_capacity = static_cast<std::size_t>(num_orders * BENCHMARK_HEADROOM_FACTOR);
 
     std::cout << "===============================================================\n";
     std::cout << " BENCHMARK: BULK LIMIT INSERTIONS (" << num_orders << " orders)\n";
@@ -104,8 +107,7 @@ TEST_F(LatencyBenchmarkTest, BulkLimitInsertions)
 TEST_F(LatencyBenchmarkTest, BulkCancellations)
 {
     const std::size_t num_orders = BENCHMARK_ORDERS_COUNT;
-    const std::size_t book_capacity =
-        static_cast<std::size_t>(num_orders * BENCHMARK_HEADROOM_FACTOR);
+    const auto book_capacity = static_cast<std::size_t>(num_orders * BENCHMARK_HEADROOM_FACTOR);
 
     std::cout << "\n===============================================================\n";
     std::cout << " BENCHMARK: O(1) CANCELLATIONS (" << num_orders << " cancels)\n";
@@ -163,8 +165,7 @@ TEST_F(LatencyBenchmarkTest, BulkCancellations)
 TEST_F(LatencyBenchmarkTest, MixedTradingWorkload)
 {
     const std::size_t num_events = BENCHMARK_ORDERS_COUNT;
-    const std::size_t book_capacity =
-        static_cast<std::size_t>(num_events * BENCHMARK_HEADROOM_FACTOR);
+    const auto book_capacity = static_cast<std::size_t>(num_events * BENCHMARK_HEADROOM_FACTOR);
 
     std::cout << "\n===============================================================\n";
     std::cout << " BENCHMARK: MIXED HIGH-FREQUENCY SIMULATION (" << num_events << " events)\n";
