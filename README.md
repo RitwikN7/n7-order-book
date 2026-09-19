@@ -68,25 +68,25 @@ Designed with institutional financial exchange principles: zero dynamic memory a
 
 ## Benchmark Results & Latency Distribution
 
-Benchmarked on **1,000,000 operations** per scenario with nanosecond-resolution timing (`std::chrono::steady_clock`):
+Benchmarked on **1,000,000 operations** per scenario with cache-aligned preallocated order book capacity ($1.2\times$ headroom = 1,200,000 slots) to guarantee zero data structure resizing during execution, measured with nanosecond-resolution timing (`std::chrono::steady_clock`):
 
 ### 1. Mixed High-Frequency Trading Workload (1,000,000 Events)
 *(60% Limit Orders, 20% Cancels, 15% Market Orders, 5% Modifies)*
 
 | Action Type | Event Count | Mean Latency | Median (\(P_{50}\)) | \(P_{90}\) | \(P_{95}\) | \(P_{99}\) | \(P_{99.9}\) | Max Latency | Throughput |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Market Orders** | 150,336 | **218.7 ns** | **133.0 ns** | 415.0 ns | 491.0 ns | 704.0 ns | 1.11 µs | 115.3 µs | **~4.57M ops/sec** |
-| **Cancellations** | 200,195 | **424.5 ns** | **519.0 ns** | 679.0 ns | 740.0 ns | 998.0 ns | 4.14 µs | 124.5 µs | **~2.36M ops/sec** |
-| **New Limit Orders**| 599,473 | **532.7 ns** | **473.0 ns** | 744.0 ns | 812.0 ns | 1.01 µs | 3.40 µs | 393.9 µs | **~1.88M ops/sec** |
-| **Modifications** | 49,996 | **687.6 ns** | **822.0 ns** | 1.25 µs | 1.36 µs | 1.69 µs | 6.82 µs | 37.9 µs | **~1.45M ops/sec** |
-| **OVERALL WORKLOAD**| 1,000,000 | **471.6 ns** | **458.0 ns** | **742.0 ns** | **848.0 ns** | **1.20 µs** | **2.74 µs** | **393.9 µs** | **~1.86M ops/sec** |
+| **Market Orders** | 150,336 | **223.0 ns** | **128.0 ns** | 426.0 ns | 509.0 ns | 781.0 ns | 1.76 µs | 184.5 µs | **~4.48M ops/sec** |
+| **Cancellations** | 200,195 | **463.1 ns** | **505.0 ns** | 681.0 ns | 802.0 ns | 1.72 µs | 5.39 µs | 94.2 µs | **~2.16M ops/sec** |
+| **New Limit Orders**| 599,473 | **596.1 ns** | **506.0 ns** | 794.0 ns | 885.0 ns | 1.65 µs | 5.39 µs | 148.7 µs | **~1.68M ops/sec** |
+| **Modifications** | 49,996 | **737.3 ns** | **812.0 ns** | 1.26 µs | 1.41 µs | 2.37 µs | 11.07 µs | 60.4 µs | **~1.36M ops/sec** |
+| **OVERALL WORKLOAD**| 1,000,000 | **520.4 ns** | **486.0 ns** | **789.0 ns** | **925.0 ns** | **1.60 µs** | **4.95 µs** | **184.5 µs** | **~1.71M ops/sec** |
 
 ### 2. Bulk Operation Benchmarks (1,000,000 Operations)
 
 | Benchmark Scenario | Sample Count | Mean Latency | Median (\(P_{50}\)) | \(P_{99}\) | \(P_{99.9}\) | Throughput |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Bulk $O(1)$ Cancellations** | 1,000,000 | **37.7 ns** | **36.0 ns** | **109.0 ns** | **323.0 ns** | **~14.00M cancels/sec** |
-| **Bulk Limit Insertions** | 1,000,000 | **847.3 ns** | **789.0 ns** | **1.58 µs** | **10.78 µs** | **~1.12M orders/sec** |
+| **Bulk $O(1)$ Cancellations** | 1,000,000 | **362.7 ns** | **316.0 ns** | **943.0 ns** | **2.71 µs** | **~2.50M cancels/sec** |
+| **Bulk Limit Insertions** | 1,000,000 | **1102.9 ns** | **944.0 ns** | **4.70 µs** | **16.96 µs** | **~0.87M orders/sec** |
 
 ---
 
@@ -104,14 +104,27 @@ cmake -B build -S .
 cmake --build build
 ```
 
-### 2. Run Test Suites & Benchmarks
+### 2. Run Application Demo
 ```bash
-# Runs functional tests (7 suites, 86 assertions) and 1M benchmarks
+# Runs the order book live demonstration (insertions, matching, modifications, cancellations)
 ./build/n7_order_book
 ```
-*Outputs latency metrics automatically to `data/latency_metrics.csv`.*
 
-### 3. Set Up Python Virtual Environment & Generate Graphs
+### 3. Run Google Test Suites & Latency Benchmarks
+```bash
+# Run all unit tests and benchmarks via CTest
+ctest --test-dir build --output-on-failure
+
+# Or run via Google Test runner:
+# 1. Run only functional & data structure unit tests (runs in < 1ms)
+./build/tests/order_book_tests --gtest_filter="OrderBookTest.*:ObjectPoolTest.*:FlatHashMapTest.*"
+
+# 2. Run nanosecond latency distribution benchmarks (1,000,000 orders, preallocated with 1.5x capacity)
+./build/tests/order_book_tests --gtest_filter="LatencyBenchmark.*"
+```
+*Latency benchmarks automatically export metrics to `data/latency_metrics.csv`.*
+
+### 4. Set Up Python Virtual Environment & Generate Graphs
 
 You can set up the Python environment using standard `python3 -m venv` or `uv`:
 
@@ -149,7 +162,7 @@ Generated charts will be saved to the `charts/` directory:
 
 ```
 n7-order-book/
-├── CMakeLists.txt              # CMake build configuration (C++23)
+├── CMakeLists.txt              # CMake build configuration (C++23 & Google Test FetchContent)
 ├── requirements.txt            # Python dependencies (matplotlib, pandas, numpy)
 ├── .clang-format               # Project formatting rules
 ├── .clang-tidy                 # Static analysis rules
@@ -166,18 +179,23 @@ n7-order-book/
 │   └── throughput_comparison.svg# Throughput (ops/sec) comparison (SVG)
 ├── scripts/
 │   └── plot_latency.py         # Python visualization generator (matplotlib)
-└── src/
-    ├── common/
-    │   ├── flat_hash_map.hpp   # High-speed open-addressing flat hash table
-    │   ├── object_pool.hpp     # Generic zero-allocation ObjectPool<T>
-    │   └── utils.hpp           # OrderID, Price, Quantity, Enums
-    ├── order-book/
-    │   ├── order.hpp           # OrderData & intrusive OrderNode
-    │   ├── price_level.hpp     # Intrusive doubly-linked FIFO PriceLevel
-    │   ├── trade.hpp           # Trade execution event struct
-    │   ├── book.hpp            # OrderBook with FlatHashMap and PMR pool
-    │   └── book.cpp            # Zero-allocation matching engine implementation
-    └── main.cpp                # Test suite, latency distribution benchmarks & CSV exporter
+├── src/
+│   ├── common/
+│   │   ├── flat_hash_map.hpp   # High-speed open-addressing flat hash table
+│   │   ├── object_pool.hpp     # Generic zero-allocation ObjectPool<T>
+│   │   └── utils.hpp           # OrderID, Price, Quantity, Enums
+│   ├── order-book/
+│   │   ├── order.hpp           # OrderData & intrusive OrderNode
+│   │   ├── price_level.hpp     # Intrusive doubly-linked FIFO PriceLevel
+│   │   ├── trade.hpp           # Trade execution event struct
+│   │   ├── book.hpp            # OrderBook with FlatHashMap and PMR pool
+│   │   └── book.cpp            # Zero-allocation matching engine implementation
+│   └── main.cpp                # Clean order book engine demonstration
+└── tests/
+    ├── CMakeLists.txt          # GTest target configuration & CTest discovery
+    ├── latency_tracker.hpp     # Nanosecond latency metrics tracker & CSV exporter
+    ├── test_order_book.cpp     # GTest functional and data structure unit test suites
+    └── test_latency_benchmark.cpp # 1M order benchmarks (1.5x preallocated capacity)
 ```
 
 ---

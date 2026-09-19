@@ -16,9 +16,8 @@ __pycache__/
 *$py.class
 .pytest_cache/
 
-# Benchmark outputs, charts & data
+# Benchmark data
 data/
-charts/
 *.csv
 
 # VS Code

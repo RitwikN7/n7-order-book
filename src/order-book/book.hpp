@@ -20,7 +20,10 @@ namespace MatchingEngine
 class Book
 {
 public:
-    explicit Book(std::size_t max_orders = 1'000'000);
+    static constexpr double DEFAULT_HEADROOM_FACTOR = 1.2;
+    static constexpr std::size_t DEFAULT_MAX_ORDERS = 1'200'000;
+
+    explicit Book(std::size_t max_orders = DEFAULT_MAX_ORDERS);
     ~Book() = default;
 
     // Non-copyable
