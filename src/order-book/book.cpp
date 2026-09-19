@@ -155,11 +155,11 @@ void Book::insertRestingOrder(const OrderData& order)
 
 bool Book::cancelOrder(OrderBookUtils::OrderID order_id)
 {
-    auto* node_ptr = orders_map_.find(order_id);
-    if (node_ptr == nullptr)
+    std::size_t idx = orders_map_.findIndex(order_id);
+    if (idx == OrderBookUtils::FlatHashMap<OrderBookUtils::OrderID, OrderNode*>::INVALID_INDEX)
         return false;
 
-    OrderNode* node = *node_ptr;
+    OrderNode* node = orders_map_.valueAt(idx);
 
     if (node->side == OrderBookUtils::OrderSide::BUY)
     {
@@ -182,7 +182,7 @@ bool Book::cancelOrder(OrderBookUtils::OrderID order_id)
         }
     }
 
-    orders_map_.erase(order_id);
+    orders_map_.eraseAt(idx);
     order_pool_.release(node);
     return true;
 }

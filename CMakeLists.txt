@@ -67,14 +67,34 @@ add_executable(n7_order_book src/main.cpp)
 target_link_libraries(n7_order_book PRIVATE n7::order_book)
 target_compile_features(n7_order_book PUBLIC cxx_std_23)
 
+# Testing with GoogleTest
+option(BUILD_TESTING "Build the testing tree." ON)
+if(BUILD_TESTING)
+    enable_testing()
+    find_package(GTest QUIET)
+    if(NOT GTest_FOUND)
+        include(FetchContent)
+        FetchContent_Declare(
+            googletest
+            URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.tar.gz
+        )
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+        FetchContent_MakeAvailable(googletest)
+    endif()
+
+    add_subdirectory(tests)
+endif()
+
 # Clang-Format integration (honors global/local clang-format configs)
 find_program(CLANG_FORMAT_EXE clang-format)
 if(CLANG_FORMAT_EXE)
     file(GLOB_RECURSE ALL_FORMAT_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.hpp
     )
-    
+
     add_custom_target(format
         COMMAND ${CLANG_FORMAT_EXE} -i ${ALL_FORMAT_SOURCES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
