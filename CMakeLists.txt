@@ -25,6 +25,7 @@ set(ORDER_BOOK_HEADERS
     src/common/utils.hpp
     src/order-book/book.hpp
     src/order-book/order.hpp
+    src/order-book/order_builder.hpp
     src/order-book/price_level.hpp
     src/order-book/trade.hpp
 )

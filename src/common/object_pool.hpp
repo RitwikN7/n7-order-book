@@ -90,8 +90,7 @@ public:
         if constexpr (!std::is_trivially_destructible_v<T>)
             std::destroy_at(ptr);
 
-        Slot* slot =
-            reinterpret_cast<Slot*>(reinterpret_cast<std::byte*>(ptr) - offsetof(Slot, storage));
+        Slot* slot = reinterpret_cast<Slot*>(ptr);
         slot->next = free_head_;
         free_head_ = slot;
         --size_;
@@ -135,15 +134,24 @@ public:
             return false;
 
         auto offset = static_cast<std::size_t>(byte_ptr - start);
-        return (offset % sizeof(Slot)) == offsetof(Slot, storage);
+        return (offset % sizeof(Slot)) == 0;
     }
 
 private:
-    struct Slot
+    union Slot
     {
         alignas(alignof(T)) std::array<std::byte, sizeof(T)> storage;
-        Slot* next{nullptr};
+        Slot* next;
+
+        Slot() noexcept
+            : next(nullptr)
+        {
+        }
     };
+
+    static_assert(sizeof(T) >= sizeof(Slot*), "ObjectPool requires sizeof(T) >= sizeof(void*)");
+    static_assert(sizeof(Slot) == sizeof(T), "Slot size must equal sizeof(T)");
+    static_assert(alignof(Slot) == alignof(T), "Slot alignment must equal alignof(T)");
 
     std::vector<Slot> pool_;
     Slot* free_head_{nullptr};

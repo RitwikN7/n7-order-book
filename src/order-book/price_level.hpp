@@ -21,9 +21,9 @@ struct PriceLevel
             head = order;
 
         tail = order;
-        total_volume += order->quantity;
+        total_volume += order->data.quantity;
         ++order_count;
-        price = order->price;
+        price = order->data.price;
     }
 
     [[nodiscard]] bool empty() const noexcept
@@ -46,18 +46,18 @@ struct PriceLevel
         order->prev = nullptr;
         order->next = nullptr;
 
-        total_volume -= order->quantity;
+        total_volume -= order->data.quantity;
         --order_count;
     }
 
-    void reset(OrderBookUtils::Price p = 0) noexcept
+    void reset(OrderBookUtils::Price p = OrderBookUtils::Price(0)) noexcept
     {
         head = nullptr;
         tail = nullptr;
         prev_level = nullptr;
         next_level = nullptr;
         price = p;
-        total_volume = 0;
+        total_volume = OrderBookUtils::Quantity(0);
         order_count = 0;
     }
 
@@ -67,8 +67,8 @@ struct PriceLevel
     PriceLevel* prev_level{nullptr};
     PriceLevel* next_level{nullptr};
 
-    OrderBookUtils::Price price{};
-    OrderBookUtils::Quantity total_volume{};
+    OrderBookUtils::Price price;
+    OrderBookUtils::Quantity total_volume;
     std::size_t order_count{};
 };
 
