@@ -224,3 +224,4 @@ n7-order-book/
 - **Cache-Aligned Price Index**: Replace binary search trees (`std::pmr::map`) with a B-Tree or Radix array to eliminate pointer-chasing and cache misses during level traversal.
 - **Advanced Order Types & TIF**: Add Time-in-Force policies (IOC, FOK, GTC) and Trailing Stops.
 - **Multi-Symbol Sharding & Sequencer**: Partition symbols across dedicated CPU cores with lock-free Write-Ahead Logging (WAL) for deterministic state replay.
+- **Deployable API and Market Data**: Integrate matching engine with an order entry protocol and dispense live market data.
